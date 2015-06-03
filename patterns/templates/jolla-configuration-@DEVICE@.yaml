@@ -2,7 +2,6 @@ Description: Pattern with packages for @DEVICE@ configurations
 Name: jolla-configuration-@DEVICE@
 Requires:
 - pattern:jolla-hw-adaptation-@DEVICE@
-- pattern:sailfish-porter-tools
 - pattern:jolla-sailfish-applications
 - pattern:jolla-ui-wayland
 

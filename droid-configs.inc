@@ -300,10 +300,54 @@ fi
 # which need some kind of substitution or generating
 
 # patterns
+mkdir -p tmp/patterns
+
+cp -f %{dcd_common}/patterns/common/* \
+      %{dcd_common}/patterns/hybris/* \
+      %{dcd_path}/patterns/* tmp/patterns
+
+CAPABILITIES=
+
+%if 0%{?have_vibrator:1}
+CAPABILITIES=have_vibrator,$CAPABILITIES
+%endif
+
+%if 0%{?have_porter_tools:1}
+CAPABILITIES=have_porter_tools,$CAPABILITIES
+%endif
+
+# enable capabilities in the template file
+echo $CAPABILITIES | sed s/,/\\n/g | (
+  while read line; do
+    if [ -n "$line" ]; then
+      sed -i 's/^%'$line'-/-/' tmp/patterns/sailfish-device-capabilities.yaml.template
+    fi
+  done)
+
+# Cleanup capabilities which device doesn't support:
+
+# remove pattern files
+cat tmp/patterns/sailfish-device-capabilities.yaml.template | grep "^%" | (
+  while read line; do
+    filename=$(echo $line | awk -F ':' '{print $2}' | tr -d '[[:space:]]')
+    rm tmp/patterns/$filename.yaml
+  done)
+
+# ...and their respective lines in the template
+grep -v "^%" tmp/patterns/sailfish-device-capabilities.yaml.template > \
+             tmp/patterns/sailfish-device-capabilities.yaml
+
+# if none of the capabilities are supported, fix empty patterns file:
+if [ -z $(grep -E "^-[[:space:]]*pattern" tmp/patterns/sailfish-device-capabilities.yaml) ]; then
+  sed -i '/^Requires:/d' tmp/patterns/sailfish-device-capabilities.yaml
+fi
+
+rm tmp/patterns/sailfish-device-capabilities.yaml.template
+
 mkdir -p %{buildroot}/usr/share/package-groups/
-/usr/bin/repomd-pattern-builder.py --patternxml -p %{dcd_common}/patterns/common -o %{buildroot}/usr/share/package-groups/ --version=%{version} --release=%{release}
-/usr/bin/repomd-pattern-builder.py --patternxml -p %{dcd_common}/patterns/hybris -o %{buildroot}/usr/share/package-groups/ --version=%{version} --release=%{release}
-/usr/bin/repomd-pattern-builder.py --patternxml -p %{dcd_path}/patterns/ -o %{buildroot}/usr/share/package-groups/ --version=%{version} --release=%{release}
+/usr/bin/repomd-pattern-builder.py --patternxml -p tmp/patterns -o %{buildroot}/usr/share/package-groups/ --version=%{version} --release=%{release}
+
+rm -rf tmp/patterns
 
 %if 0%{!?pixel_ratio:1}
 %define pixel_ratio 1.0

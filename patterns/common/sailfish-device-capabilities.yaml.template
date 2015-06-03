@@ -1,0 +1,8 @@
+Description: All available capabilities. (Template file lists all, final .yaml will reflect only what device needs)
+Name: sailfish-device-capabilities
+Requires:
+%have_vibrator- pattern:sailfish-ha-vibrator
+%have_porter_tools- pattern:sailfish-porter-tools
+
+Summary: Sailfish OS Device Capabilities
+
